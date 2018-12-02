@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace day2
 {
@@ -9,7 +10,8 @@ namespace day2
     {
         static void Main(string[] args)
         {
-            Console.WriteLine(ComputeChecksum(File.ReadLines("input.txt")));
+            Console.WriteLine("Checksum: " + ComputeChecksum(File.ReadLines("input.txt")));
+            Console.WriteLine("Common Letters: " + FindSharedLetters(File.ReadLines("input.txt")));
         }
 
         public struct Result
@@ -30,7 +32,7 @@ namespace day2
         {
             public readonly int NumDoubles;
             public readonly int NumTriples;
-            
+
             public Count(int numDoubles, int numTriples)
             {
                 NumDoubles = numDoubles;
@@ -48,14 +50,14 @@ namespace day2
         public static int ComputeChecksum(IEnumerable<string> inputs)
         {
             return inputs
-                .Select(GetScore)
+                .Select(CountRepeatedCharacters)
                 .Aggregate(
                     new Count(),
                     (counts, result) => counts + result.ToIncrement())
                 .GetChecksum();
         }
 
-        public static Result GetScore(string input)
+        public static Result CountRepeatedCharacters(string input)
         {
             var dict = new Dictionary<char, int>();
 
@@ -69,6 +71,42 @@ namespace day2
             }
 
             return new Result(dict.Values.Any(count => count == 2), dict.Values.Any(count => count == 3));
+        }
+
+        public static int Difference(string s1, string s2)
+        {
+            return s1.Zip(s2, (c1, c2) => (c1, c2)).Sum(pair => pair.Item1 != pair.Item2 ? 1 : 0);
+        }
+
+        public static string GetSharedLetters(string s1, string s2)
+        {
+            var sb = new StringBuilder();
+
+            foreach (var (c1, c2) in s1.Zip(s2, (c1, c2) => (c1, c2)))
+            {
+                if (c1 == c2)
+                {
+                    sb.Append(c1);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public static string FindSharedLetters(IEnumerable<string> input)
+        {
+            var inputArray = input.ToArray();
+
+            for (int i = 0; i < inputArray.Length; i++)
+            {
+                for (int j = i + 1; j < inputArray.Length; j++)
+                {
+                    if (Difference(inputArray[i], inputArray[j]) == 1)
+                        return GetSharedLetters(inputArray[i], inputArray[j]);
+                }
+            }
+
+            return "";
         }
     }
 }
