@@ -14,12 +14,12 @@ namespace day2
             Console.WriteLine("Common Letters: " + FindSharedLetters(File.ReadLines("input.txt")));
         }
 
-        public struct Result
+        public struct Repeats
         {
             public readonly bool ContainsDouble;
             public readonly bool ContainsTriple;
 
-            public Result(bool containsDouble, bool containsTriple)
+            public Repeats(bool containsDouble, bool containsTriple)
             {
                 ContainsDouble = containsDouble;
                 ContainsTriple = containsTriple;
@@ -57,7 +57,7 @@ namespace day2
                 .GetChecksum();
         }
 
-        public static Result CountRepeatedCharacters(string input)
+        public static Repeats CountRepeatedCharacters(string input)
         {
             var dict = new Dictionary<char, int>();
 
@@ -70,7 +70,7 @@ namespace day2
                 dict[c]++;
             }
 
-            return new Result(dict.Values.Any(count => count == 2), dict.Values.Any(count => count == 3));
+            return new Repeats(dict.Values.Any(count => count == 2), dict.Values.Any(count => count == 3));
         }
 
         public static int Difference(string s1, string s2)
