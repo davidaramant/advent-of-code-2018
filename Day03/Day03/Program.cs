@@ -33,17 +33,20 @@ namespace Day03
         public static int FindClaimThatDoesNotOverlap(Claim[] claims)
         {
             List<bool> overlappingIds = Enumerable.Repeat(false, claims.Length).ToList();
-            Parallel.For(0, claims.Length - 1, i =>
+            var pairsToCheck = 
+                Enumerable.Range(0, claims.Length - 1)
+                .SelectMany(i => Enumerable.Range(i + 1, claims.Length - (i + 1)).Select(j => (i, j)));
+
+            Parallel.ForEach(pairsToCheck, pair =>
             {
-                for (int j = i + 1; j < claims.Length; j++)
+                var (i, j) = pair;
+                if (claims[i].Intersects(claims[j]))
                 {
-                    if (claims[i].Intersects(claims[j]))
-                    {
-                        overlappingIds[i] = true;
-                        overlappingIds[j] = true;
-                    }
+                    overlappingIds[i] = true;
+                    overlappingIds[j] = true;
                 }
             });
+
             return overlappingIds.IndexOf(false) + 1;
         }
     }
