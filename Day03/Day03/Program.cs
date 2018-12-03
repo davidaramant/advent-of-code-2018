@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Day03
 {
@@ -22,43 +23,54 @@ namespace Day03
         }
     }
 
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
-            var lines = File.ReadAllLines("input.txt");
+            var claims = File.ReadAllLines("input.txt").AsParallel().Select(Claim.Parse).ToArray();
 
-            Console.Out.WriteLine("Square inches covered 2 times or more: " + FindAreaCoveredAtLeastTwice(lines));
+            Console.Out.WriteLine("Square inches covered 2 times or more: " + FindAreaCoveredAtLeastTwice(claims));
+            Console.Out.WriteLine("Claim that doesn't overlap: " + FindClaimThatDoesNotOverlap(claims));
 
             Console.ReadKey();
         }
 
-        private static int FindAreaCoveredAtLeastTwice(IEnumerable<string> lines)
+        public static int FindAreaCoveredAtLeastTwice(IEnumerable<Claim> claims)
         {
-            var allCoveredPoints = lines
-                    .AsParallel()
-                    .Select(Claim.Parse)
-                    .SelectMany(c => c.GetPointsInArea());
-
             var counter = new Dictionary<Point, int>();
-            foreach (var p in allCoveredPoints)
+            foreach (var p in claims.SelectMany(c => c.GetPointsInArea()))
             {
                 counter.Increment(p);
             }
 
             return counter.Values.Count(c => c >= 2);
         }
+
+        public static int FindClaimThatDoesNotOverlap(Claim[] claims)
+        {
+            List<bool> overlappingIds = Enumerable.Repeat(false, claims.Length).ToList();
+            Parallel.For(0, claims.Length - 1, i =>
+            {
+                for (int j = i + 1; j < claims.Length; j++)
+                {
+                    var intersects = claims[i].Intersects(claims[j]);
+                    overlappingIds[i] |= intersects;
+                    overlappingIds[j] |= intersects;
+                }
+            });
+            return overlappingIds.IndexOf(false) + 1;
+        }
     }
 
-    sealed class Claim
+    public sealed class Claim
     {
-        public int Id { get; }
-        public Rectangle Area { get; }
+        private readonly int _id;
+        private readonly Rectangle _area;
 
         public Claim(int id, Rectangle area)
         {
-            Id = id;
-            Area = area;
+            _id = id;
+            _area = area;
         }
 
         public static Claim Parse(string input)
@@ -81,13 +93,15 @@ namespace Day03
 
         public IEnumerable<Point> GetPointsInArea()
         {
-            foreach (var x in Enumerable.Range(Area.Left, Area.Width))
+            foreach (var x in Enumerable.Range(_area.Left, _area.Width))
             {
-                foreach (var y in Enumerable.Range(Area.Top, Area.Height))
+                foreach (var y in Enumerable.Range(_area.Top, _area.Height))
                 {
                     yield return new Point(x, y);
                 }
             }
         }
+
+        public bool Intersects(Claim other) => _area.IntersectsWith(other._area);
     }
 }
