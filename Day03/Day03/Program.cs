@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -8,21 +9,6 @@ using System.Threading.Tasks;
 
 namespace Day03
 {
-    static class DictionaryExtensions
-    {
-        public static void Increment(this Dictionary<Point, int> counter, Point p)
-        {
-            if (counter.ContainsKey(p))
-            {
-                counter[p]++;
-            }
-            else
-            {
-                counter[p] = 1;
-            }
-        }
-    }
-
     public class Program
     {
         static void Main(string[] args)
@@ -37,11 +23,9 @@ namespace Day03
 
         public static int FindAreaCoveredAtLeastTwice(IEnumerable<Claim> claims)
         {
-            var counter = new Dictionary<Point, int>();
-            foreach (var p in claims.SelectMany(c => c.GetPointsInArea()))
-            {
-                counter.Increment(p);
-            }
+            var counter = new ConcurrentDictionary<Point, int>();
+            Parallel.ForEach(claims.SelectMany(c => c.GetPointsInArea()),
+                p => { counter.AddOrUpdate(p, 1, (id, count) => count + 1); });
 
             return counter.Values.Count(c => c >= 2);
         }
@@ -53,9 +37,11 @@ namespace Day03
             {
                 for (int j = i + 1; j < claims.Length; j++)
                 {
-                    var intersects = claims[i].Intersects(claims[j]);
-                    overlappingIds[i] |= intersects;
-                    overlappingIds[j] |= intersects;
+                    if (claims[i].Intersects(claims[j]))
+                    {
+                        overlappingIds[i] = true;
+                        overlappingIds[j] = true;
+                    }
                 }
             });
             return overlappingIds.IndexOf(false) + 1;
