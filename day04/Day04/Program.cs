@@ -13,6 +13,10 @@ namespace Day04
         public static TimeSpan Sum<T>(this IEnumerable<T> sequence, Func<T, TimeSpan> selector) =>
             sequence.Aggregate(TimeSpan.Zero, (total, container) => total + selector(container));
 
+        public static MinutesSlept Sum<T>(this IEnumerable<T> sequence, Func<T, MinutesSlept> selector) =>
+            sequence.Aggregate(MinutesSlept.Zero, (total, container) => total + selector(container));
+
+        // WHY IS THIS NOT BUILT IN
         public static T MaxElement<T, U>(this IEnumerable<T> sequence, Func<T, U> selector) where U : IComparable<U>
         {
             return sequence.Aggregate((i1, i2) => selector(i1).CompareTo(selector(i2)) == 1 ? i1 : i2);
@@ -53,7 +57,7 @@ namespace Day04
         {
             var result = shiftGroups.Select(group =>
                (id: group.Key,
-                mostSlept: group.Aggregate(MinutesSlept.Zero, (total, shift) => total + shift.GetMinutesSlept()).GetMostSleptMinute()))
+                mostSlept: group.Sum(shift => shift.GetMinutesSlept()).GetMostSleptMinute()))
                 .MaxElement(pair => pair.mostSlept.Times);
 
             return result.id * result.mostSlept.Minute;
@@ -156,8 +160,7 @@ namespace Day04
             TimesAsleep = sleepTimes.ToImmutableList();
         }
 
-        public MinutesSlept GetMinutesSlept() =>
-            TimesAsleep.Aggregate(MinutesSlept.Zero, (total, sleepTime) => total + MinutesSlept.From(sleepTime));
+        public MinutesSlept GetMinutesSlept() => TimesAsleep.Sum(MinutesSlept.From);
     }
 
     public sealed class MinutesSlept
