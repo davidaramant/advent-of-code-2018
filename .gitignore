@@ -1,0 +1,4 @@
+# Ignore vagrant stuff
+# I'm sure there's a better way to do this
+.vagrant/
+*console.log
