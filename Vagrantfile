@@ -70,6 +70,7 @@ Vagrant.configure("2") do |config|
     apt-get install -y gfortran
     apt-get install -y clang
     apt-get install -y docker.io
+    usermod -aG docker vagrant
     docker pull rakudo-star
   SHELL
 end
